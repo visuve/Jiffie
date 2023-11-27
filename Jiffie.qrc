@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/">
+    <file>Jiffie.png</file>
+  </qresource>
+</RCC>

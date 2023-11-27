@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(JIFFIE LANGUAGES CXX)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+
+if (Qt6_FOUND)
+	find_package(Qt6 COMPONENTS StateMachine REQUIRED)
+endif()
+
+file(GLOB JIFFIE_SOURCES "*.cpp" "*.hpp" "*.h" ".ui" "*.qrc")
+
+if (MSVC)
+	set(APP_ICON_RESOURCE_WINDOWS "Jiffie.rc")
+	set(JIFFIE_EXECUTABLE "JIFFIE")
+	add_executable(${JIFFIE_EXECUTABLE} ${JIFFIE_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+else()
+	set(JIFFIE_EXECUTABLE "JIFFIE")
+	add_executable(${JIFFIE_EXECUTABLE} ${JIFFIE_SOURCES})
+endif()
+
+find_package(Git)
+
+if(Git_FOUND)
+	message(STATUS "GIT_EXECUTABLE='${GIT_EXECUTABLE}'")
+
+	execute_process(
+		COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE JIFFIE_GIT_COMMIT_HASH
+		RESULT_VARIABLE JIFFIE_GIT_RESULT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	message(STATUS "Git commit hash: " ${JIFFIE_GIT_COMMIT_HASH})
+	message(STATUS "Git result: " ${JIFFIE_GIT_RESULT})
+
+	target_compile_definitions(${JIFFIE_EXECUTABLE} PRIVATE JIFFIE_MAJOR=0)
+	target_compile_definitions(${JIFFIE_EXECUTABLE} PRIVATE JIFFIE_MINOR=2)
+	target_compile_definitions(${JIFFIE_EXECUTABLE} PRIVATE JIFFIE_BUILD=1)
+	target_compile_definitions(${JIFFIE_EXECUTABLE} PRIVATE JIFFIE_COMMIT_HASH="${JIFFIE_GIT_COMMIT_HASH}")
+endif()
+
+target_link_libraries(${JIFFIE_EXECUTABLE} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
+if (Qt6_FOUND)
+	target_link_libraries(${JIFFIE_EXECUTABLE} PRIVATE Qt6::StateMachine)
+endif()
