@@ -23,8 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	_ui->listViewFiles->setModel(_model);
 
-	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::startSearch);
-	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::removeSelected);
+	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::onStartSearch);
+	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::onRemoveSelected);
 }
 
 MainWindow::~MainWindow()
@@ -65,14 +65,14 @@ void MainWindow::onOpenDirectoryDialog()
 	}
 }
 
-void MainWindow::startSearch()
+void MainWindow::onStartSearch()
 {
 	const QString selectedDirectory = _ui->lineEditSelectedDirectory->text();
 
 	if (selectedDirectory.isEmpty())
 	{
 		onOpenDirectoryDialog();
-		startSearch();
+		onStartSearch();
 		return;
 	}
 
@@ -103,6 +103,19 @@ void MainWindow::startSearch()
 	_jiffie->setDirectory(selectedDirectory);
 	_jiffie->setWildcards(selectedWildcards);
 	_jiffie->start();
+
+	const QString message = QString("%1 Jiffie started!").arg(QTime::currentTime().toString());
+	_ui->statusBar->showMessage(message);
+}
+
+void MainWindow::onProgress(const QString& directoryPath)
+{
+	const QString message =
+			QString("%1 Currently processing: %2")
+			.arg(QTime::currentTime().toString())
+			.arg(directoryPath);
+
+	_ui->statusBar->showMessage(message);
 }
 
 void MainWindow::onFinished()
@@ -123,7 +136,7 @@ void MainWindow::onFinished()
 	_ui->statusBar->showMessage(message);
 }
 
-void MainWindow::removeSelected()
+void MainWindow::onRemoveSelected()
 {
 	const QStringList filePaths = _model->selectedPaths();
 
@@ -162,6 +175,7 @@ void MainWindow::removeSelected()
 void MainWindow::initJiffie()
 {
 	connect(_jiffie, &JunkFileFinder::junkFound, _model, &FileListModel::addFilePath);
+	connect(_jiffie, &JunkFileFinder::progress, this, &MainWindow::onProgress);
 	connect(_jiffie, &JunkFileFinder::finished, this, &MainWindow::onFinished);
 }
 

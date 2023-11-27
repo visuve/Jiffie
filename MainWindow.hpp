@@ -21,9 +21,10 @@ public:
 private slots:
 	void onAbout();
 	void onOpenDirectoryDialog();
-	void startSearch();
+	void onStartSearch();
+	void onProgress(const QString&);
 	void onFinished();
-	void removeSelected();
+	void onRemoveSelected();
 
 private:
 	void initJiffie();

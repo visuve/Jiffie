@@ -1,13 +1,11 @@
 #include "JunkFileFinder.hpp"
 
 #include <QDebug>
-#include <QDir>
 #include <QDirIterator>
 
 JunkFileFinder::JunkFileFinder(QObject* parent) :
 	QThread(parent)
 {
-
 }
 
 JunkFileFinder::~JunkFileFinder()
@@ -42,12 +40,23 @@ bool JunkFileFinder::keepRunning() const
 
 void JunkFileFinder::run()
 {
-	QDirIterator it(_directory, _wildcards, QDir::Files, QDirIterator::Subdirectories);
+	QDirIterator iter(_directory, _wildcards, QDir::Files, QDirIterator::Subdirectories);
 
-	while (keepRunning() && it.hasNext())
+	QString currentDirectory;
+
+	while (keepRunning() && iter.hasNext())
 	{
-		const QString path = QDir::toNativeSeparators(it.next());
+		const QFileInfo fileInfo = iter.nextFileInfo();
 
-		emit junkFound(path);
+		const QString directoryPath = QDir::toNativeSeparators(fileInfo.path());
+		const QString filePath = QDir::toNativeSeparators(fileInfo.filePath());
+
+		emit junkFound(filePath);
+
+		if (currentDirectory != directoryPath)
+		{
+			emit progress(directoryPath);
+			currentDirectory = directoryPath;
+		}
 	}
 }
