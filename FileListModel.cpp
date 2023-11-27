@@ -57,3 +57,10 @@ Qt::ItemFlags FileListModel::flags(const QModelIndex& index) const
 
 	return Qt::NoItemFlags;
 }
+
+void FileListModel::clear()
+{
+	beginResetModel();
+	_files.clear();
+	endResetModel();
+}

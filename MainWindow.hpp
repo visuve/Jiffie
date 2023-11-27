@@ -19,8 +19,11 @@ public:
 
 private slots:
 	void onAbout();
+	void onOpenDirectoryDialog();
 
 private:
+	void initMenuBar();
+
 	Ui::MainWindow* _ui;
 	FileListModel* _model;
 };

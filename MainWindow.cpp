@@ -4,6 +4,8 @@
 #include "FileListModel.hpp"
 
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -14,17 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	_ui->statusBar->showMessage("Welcome to Jiffie!");
 
-	_ui->actionExit->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
-	connect(_ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
-
-	_ui->actionAbout->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
-	connect(_ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
-
-	_ui->actionLicenses->setIcon(QApplication::style()->standardIcon(QStyle::SP_TitleBarMenuButton));
-	connect(_ui->actionLicenses, &QAction::triggered, [this]()
-	{
-		QMessageBox::aboutQt(this, "Jiffie");
-	});
+	initMenuBar();
 
 	_ui->listViewFiles->setModel(_model);
 }
@@ -51,4 +43,36 @@ void MainWindow::onAbout()
 	text << "<p>Git commit hash this build is from: " << commitUrl << "</p>";
 
 	QMessageBox::about(this, "Jiffie", text.join('\n'));
+}
+
+void MainWindow::onOpenDirectoryDialog()
+{
+	QFileDialog dialog(this);
+	dialog.setFileMode(QFileDialog::Directory);
+	dialog.setOption(QFileDialog::ShowDirsOnly, true);
+
+	if (dialog.exec() == QFileDialog::Accepted)
+	{
+		_model->clear();
+		const QString directory = dialog.selectedFiles().first();
+		_ui->lineEditSelectedDirectory->setText(QDir::toNativeSeparators(directory));
+	}
+}
+
+void MainWindow::initMenuBar()
+{
+	_ui->actionOpen->setIcon(QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon));
+	connect(_ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenDirectoryDialog);
+
+	_ui->actionExit->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
+	connect(_ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
+
+	_ui->actionAbout->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	connect(_ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
+
+	_ui->actionLicenses->setIcon(QApplication::style()->standardIcon(QStyle::SP_TitleBarMenuButton));
+	connect(_ui->actionLicenses, &QAction::triggered, [this]()
+	{
+		QMessageBox::aboutQt(this, "Jiffie");
+	});
 }

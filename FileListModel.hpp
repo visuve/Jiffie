@@ -23,6 +23,8 @@ public:
 
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
+	void clear();
+
 private:
 	QList<FileItem> _files;
 };
