@@ -1,0 +1,12 @@
+root = true
+
+[*.{cpp,hpp,md}]
+indent_style = tab
+charset = utf-8
+end_of_line = lf
+
+[*.{qrc, ui}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
