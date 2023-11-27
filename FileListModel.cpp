@@ -3,9 +3,6 @@
 FileListModel::FileListModel(QObject* parent) :
 	QAbstractListModel(parent)
 {
-	_files.emplaceBack(Qt::CheckState::Checked, "Example 1");
-	_files.emplaceBack(Qt::CheckState::Unchecked, "Example 2");
-	_files.emplaceBack(Qt::CheckState::Checked, "Example 3");
 }
 
 int FileListModel::rowCount(const QModelIndex& parent) const

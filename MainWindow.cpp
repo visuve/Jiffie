@@ -4,11 +4,12 @@
 #include "FileListModel.hpp"
 #include "JunkFileFinder.hpp"
 
-#include <QMessageBox>
-#include <QFileInfo>
+#include <QDesktopServices>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QMessageBox>
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget* parent) :
 	QMainWindow(parent),
 	_ui(new Ui::MainWindow),
 	_model(new FileListModel(this)),
@@ -25,11 +26,40 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::onStartSearch);
 	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::onRemoveSelected);
+	connect(_ui->listViewFiles, &QListView::customContextMenuRequested, this, &MainWindow::onCreateFileContextMenu);
 }
 
 MainWindow::~MainWindow()
 {
 	delete _ui;
+}
+
+void MainWindow::openFileWithDefaultAssociation(const QString& filePath)
+{
+	const QUrl url = QUrl::fromLocalFile(filePath);
+
+	if (!QDesktopServices::openUrl(url))
+	{
+		QMessageBox::warning(this, "Failed to open", "Failed to open file:\n\n" + filePath + "\n");
+	}
+}
+
+void MainWindow::openParentDirectory(const QString& filePath)
+{
+	const QFileInfo fileInfo(filePath);
+
+	if (!fileInfo.exists())
+	{
+		QMessageBox::warning(this, "Failed to open", "The file does not appear to exist:\n\n" + filePath + "\n");
+		return;
+	}
+
+	const QUrl url = QUrl::fromLocalFile(fileInfo.dir().path());
+
+	if (!QDesktopServices::openUrl(url))
+	{
+		QMessageBox::warning(this, "Failed to open", "Failed to open directory:\n\n" + filePath + "\n");
+	}
 }
 
 void MainWindow::onAbout()
@@ -170,6 +200,43 @@ void MainWindow::onRemoveSelected()
 
 		_model->removeFilePath(filePath);
 	}
+}
+
+void MainWindow::onCreateFileContextMenu(const QPoint& pos)
+{
+	const QModelIndex selection = _ui->listViewFiles->indexAt(pos);
+
+	if (!selection.isValid())
+	{
+		qDebug() << "Invalid selection";
+		return;
+	}
+
+	const QVariant variant = _model->data(selection, Qt::DisplayRole);
+
+	if (!variant.isValid())
+	{
+		qDebug() << "Invalid variant";
+		return;
+	}
+
+	const QString filePath = variant.toString();
+
+	if (filePath.isEmpty())
+	{
+		qDebug() << "File path is empty / no file selected";
+		return;
+	}
+
+	auto openFileAction = new QAction("Open file", this);
+	connect(openFileAction, &QAction::triggered, std::bind(&MainWindow::openFileWithDefaultAssociation, this, filePath));
+
+	auto openParentDirAction = new QAction("Open parent directory", this);
+	connect(openParentDirAction, &QAction::triggered, std::bind(&MainWindow::openParentDirectory, this, filePath));
+
+	QMenu menu(this);
+	menu.addActions({ openParentDirAction });
+	menu.exec(_ui->listViewFiles->mapToGlobal(pos));
 }
 
 void MainWindow::initJiffie()
