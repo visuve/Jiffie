@@ -64,3 +64,37 @@ void FileListModel::clear()
 	_files.clear();
 	endResetModel();
 }
+
+void FileListModel::addFilePath(const QString& filePath)
+{
+	beginInsertRows(QModelIndex(), 0, 1);
+	_files.emplaceBack(Qt::CheckState::Unchecked, filePath);
+	endInsertRows();
+}
+
+QStringList FileListModel::selectedPaths() const
+{
+	QStringList result;
+
+	for (const FileItem& item : _files)
+	{
+		if (item.state == Qt::CheckState::Checked)
+		{
+			result << item.path;
+		}
+	}
+
+	return result;
+}
+
+void FileListModel::removeFilePath(const QString& filePath)
+{
+	beginResetModel();
+
+	_files.removeIf([=](const FileItem& item)
+	{
+		return item.path == filePath;
+	});
+
+	endResetModel();
+}

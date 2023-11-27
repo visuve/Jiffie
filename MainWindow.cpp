@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include "JiffieVersion.h"
 #include "FileListModel.hpp"
+#include "JunkFileFinder.hpp"
 
 #include <QMessageBox>
 #include <QFileInfo>
@@ -10,15 +11,20 @@
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	_ui(new Ui::MainWindow),
-	_model(new FileListModel(this))
+	_model(new FileListModel(this)),
+	_jiffie(new JunkFileFinder(this))
 {
 	_ui->setupUi(this);
 
 	_ui->statusBar->showMessage("Welcome to Jiffie!");
 
+	initJiffie();
 	initMenuBar();
 
 	_ui->listViewFiles->setModel(_model);
+
+	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::startSearch);
+	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::removeSelected);
 }
 
 MainWindow::~MainWindow()
@@ -57,6 +63,106 @@ void MainWindow::onOpenDirectoryDialog()
 		const QString directory = dialog.selectedFiles().first();
 		_ui->lineEditSelectedDirectory->setText(QDir::toNativeSeparators(directory));
 	}
+}
+
+void MainWindow::startSearch()
+{
+	const QString selectedDirectory = _ui->lineEditSelectedDirectory->text();
+
+	if (selectedDirectory.isEmpty())
+	{
+		onOpenDirectoryDialog();
+		startSearch();
+		return;
+	}
+
+	if (!QDir(selectedDirectory).exists())
+	{
+		QMessageBox::warning(this, "Invalid directory", '"' + selectedDirectory + '"' + " does not appear to exist!");
+		onOpenDirectoryDialog();
+		return;
+	}
+
+	const QString selectedWildcards = _ui->lineEditWildcards->text();
+
+	if (selectedWildcards.isEmpty())
+	{
+		 QMessageBox::StandardButton reply = QMessageBox::warning(
+			this,
+			"No wildcards",
+			"Having no wildcards will include all files in the selected directory.\nAre you sure you want to continue?",
+			QMessageBox::Yes|QMessageBox::No);
+
+		if (reply != QMessageBox::Yes)
+		{
+			return;
+		}
+	}
+
+	_model->clear();
+	_jiffie->setDirectory(selectedDirectory);
+	_jiffie->setWildcards(selectedWildcards);
+	_jiffie->start();
+}
+
+void MainWindow::onFinished()
+{
+	if (_model->rowCount() <= 0)
+	{
+		QMessageBox::information(
+			this,
+			"No junk files",
+			"No junk files were found.\n");
+	}
+
+	const QString message =
+		QString("%1 Finished searching: %2")
+			.arg(QTime::currentTime().toString())
+			.arg(_ui->lineEditSelectedDirectory->text());
+
+	_ui->statusBar->showMessage(message);
+}
+
+void MainWindow::removeSelected()
+{
+	const QStringList filePaths = _model->selectedPaths();
+
+	if (filePaths.empty())
+	{
+		QMessageBox::warning(this, "Failed to remove file", "Nothing selected!\n");
+		return;
+	}
+
+	if (QMessageBox::question(
+			this,
+			"Confirm delete?",
+			"Are you sure you want to delete the following files:\n" + filePaths.join('\n')) !=
+		QMessageBox::StandardButton::Yes)
+	{
+		return;
+	}
+
+	for (const QString& filePath : filePaths)
+	{
+		if (!QFile::remove(filePath))
+		{
+			if (QFile::exists(filePath))
+			{
+				QMessageBox::warning(this, "Failed to remove file", "Failed to remove:\n\n" + filePath + "\n");
+				continue;
+			}
+
+			QMessageBox::warning(this, "Failed to remove file", filePath + "\n\ndoes not exist anymore!\n");
+		}
+
+		_model->removeFilePath(filePath);
+	}
+}
+
+void MainWindow::initJiffie()
+{
+	connect(_jiffie, &JunkFileFinder::junkFound, _model, &FileListModel::addFilePath);
+	connect(_jiffie, &JunkFileFinder::finished, this, &MainWindow::onFinished);
 }
 
 void MainWindow::initMenuBar()

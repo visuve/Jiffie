@@ -20,10 +20,12 @@ public:
 
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 	void clear();
+	void addFilePath(const QString& filePath);
+	QStringList selectedPaths() const;
+	void removeFilePath(const QString&);
 
 private:
 	QList<FileItem> _files;

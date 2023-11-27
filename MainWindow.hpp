@@ -8,6 +8,7 @@ namespace Ui
 }
 
 class FileListModel;
+class JunkFileFinder;
 
 class MainWindow : public QMainWindow
 {
@@ -20,10 +21,15 @@ public:
 private slots:
 	void onAbout();
 	void onOpenDirectoryDialog();
+	void startSearch();
+	void onFinished();
+	void removeSelected();
 
 private:
+	void initJiffie();
 	void initMenuBar();
 
 	Ui::MainWindow* _ui;
 	FileListModel* _model;
+	JunkFileFinder* _jiffie;
 };
