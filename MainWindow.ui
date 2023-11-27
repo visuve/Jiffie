@@ -15,17 +15,17 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="1" colspan="2">
+     <widget class="QLineEdit" name="lineEditWildcards">
+      <property name="text">
+       <string>thumbs.db|.DS_Store|._*</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="labelSelectedDirectory">
       <property name="text">
        <string>Selected Directory:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="pushButtonDeleteSelected">
-      <property name="text">
-       <string>Delete Selected</string>
       </property>
      </widget>
     </item>
@@ -42,10 +42,10 @@
       </property>
      </spacer>
     </item>
-    <item row="3" column="2">
-     <widget class="QPushButton" name="pushButtonFindJunk">
+    <item row="3" column="0">
+     <widget class="QPushButton" name="pushButtonDeleteSelected">
       <property name="text">
-       <string>Find Junk</string>
+       <string>Delete Selected</string>
       </property>
      </widget>
     </item>
@@ -59,15 +59,15 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0" colspan="3">
-     <widget class="QListView" name="listViewResults"/>
-    </item>
-    <item row="1" column="1" colspan="2">
-     <widget class="QLineEdit" name="lineEditWildcards">
+    <item row="3" column="2">
+     <widget class="QPushButton" name="pushButtonFindJunk">
       <property name="text">
-       <string>thumbs.db|.DS_Store|._*</string>
+       <string>Find Junk</string>
       </property>
      </widget>
+    </item>
+    <item row="2" column="0" colspan="3">
+     <widget class="QListView" name="listViewFiles"/>
     </item>
    </layout>
   </widget>
@@ -77,7 +77,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>22</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

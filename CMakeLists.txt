@@ -18,7 +18,7 @@ if (Qt6_FOUND)
 	find_package(Qt6 COMPONENTS StateMachine REQUIRED)
 endif()
 
-file(GLOB JIFFIE_SOURCES "*.cpp" "*.hpp" "*.h" ".ui" "*.qrc")
+file(GLOB JIFFIE_SOURCES "*.cpp" "*.hpp" "*.h" "*.ui" "*.qrc")
 
 if (MSVC)
 	set(APP_ICON_RESOURCE_WINDOWS "Jiffie.rc")

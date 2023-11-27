@@ -1,33 +1,37 @@
 #include "MainWindow.hpp"
 #include "ui_MainWindow.h"
 #include "JiffieVersion.h"
+#include "FileListModel.hpp"
 
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
-	ui(new Ui::MainWindow)
+	_ui(new Ui::MainWindow),
+	_model(new FileListModel(this))
 {
-	ui->setupUi(this);
+	_ui->setupUi(this);
 
-	ui->statusBar->showMessage("Welcome to Jiffie!");
+	_ui->statusBar->showMessage("Welcome to Jiffie!");
 
-	ui->actionExit->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
-	connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
+	_ui->actionExit->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
+	connect(_ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
 
-	ui->actionAbout->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
-	connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
+	_ui->actionAbout->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
+	connect(_ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
 
-	ui->actionLicenses->setIcon(QApplication::style()->standardIcon(QStyle::SP_TitleBarMenuButton));
-	connect(ui->actionLicenses, &QAction::triggered, [this]()
+	_ui->actionLicenses->setIcon(QApplication::style()->standardIcon(QStyle::SP_TitleBarMenuButton));
+	connect(_ui->actionLicenses, &QAction::triggered, [this]()
 	{
 		QMessageBox::aboutQt(this, "Jiffie");
 	});
+
+	_ui->listViewFiles->setModel(_model);
 }
 
 MainWindow::~MainWindow()
 {
-	delete ui;
+	delete _ui;
 }
 
 void MainWindow::onAbout()

@@ -7,6 +7,8 @@ namespace Ui
 	class MainWindow;
 }
 
+class FileListModel;
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -19,5 +21,6 @@ private slots:
 	void onAbout();
 
 private:
-	Ui::MainWindow *ui;
+	Ui::MainWindow* _ui;
+	FileListModel* _model;
 };
