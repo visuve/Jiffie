@@ -28,8 +28,10 @@ public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
+public slots:
 	void clear();
 	void addFilePath(const QString& filePath);
+	void selectAll();
 	QStringList selectedPaths() const;
 	void removeFilePath(const QString&);
 

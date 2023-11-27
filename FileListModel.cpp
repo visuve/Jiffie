@@ -69,6 +69,18 @@ void FileListModel::addFilePath(const QString& filePath)
 	endInsertRows();
 }
 
+void FileListModel::selectAll()
+{
+	beginResetModel();
+
+	for (FileItem& item : _files)
+	{
+		item.state = Qt::CheckState::Checked;
+	}
+
+	endResetModel();
+}
+
 QStringList FileListModel::selectedPaths() const
 {
 	QStringList result;

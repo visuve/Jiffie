@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget* parent) :
 	_ui->listViewFiles->setModel(_model);
 
 	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::onStartSearch);
+	connect(_ui->pushButtonSelectAll, &QPushButton::clicked, this, &MainWindow::onSelectAll);
 	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::onRemoveSelected);
 	connect(_ui->listViewFiles, &QListView::customContextMenuRequested, this, &MainWindow::onCreateFileContextMenu);
 }
@@ -121,7 +122,7 @@ void MainWindow::onStartSearch()
 			this,
 			"No wildcards",
 			"Having no wildcards will include all files in the selected directory.\nAre you sure you want to continue?",
-			QMessageBox::Yes|QMessageBox::No);
+			QMessageBox::Yes | QMessageBox::No);
 
 		if (reply != QMessageBox::Yes)
 		{
@@ -164,6 +165,11 @@ void MainWindow::onFinished()
 			.arg(_ui->lineEditSelectedDirectory->text());
 
 	_ui->statusBar->showMessage(message);
+}
+
+void MainWindow::onSelectAll()
+{
+	_model->selectAll();
 }
 
 void MainWindow::onRemoveSelected()

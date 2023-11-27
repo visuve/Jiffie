@@ -24,6 +24,7 @@ private slots:
 	void onStartSearch();
 	void onProgress(const QString&);
 	void onFinished();
+	void onSelectAll();
 	void onRemoveSelected();
 	void onCreateFileContextMenu(const QPoint&);
 
