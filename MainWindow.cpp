@@ -9,6 +9,20 @@
 #include <QFileInfo>
 #include <QMessageBox>
 
+#include <filesystem>
+
+// QFile::remove fails with read only files, hence the hack.
+// QFile::moveToTrash works, but it can be really really slow
+// e.g. on large data masses on a slow network drive
+inline bool removeFile(const QString& filePath)
+{
+#ifdef _WIN32
+	return std::filesystem::remove(filePath.toStdWString());
+#else
+	return std::filesystem::remove(filePath.toStdString());
+#endif
+}
+
 MainWindow::MainWindow(QWidget* parent) :
 	QMainWindow(parent),
 	_ui(new Ui::MainWindow),
@@ -144,7 +158,7 @@ void MainWindow::onProgress(const QString& directoryPath)
 	const QString message =
 			QString("%1 Currently processing: %2")
 			.arg(QTime::currentTime().toString())
-			.arg(directoryPath);
+			.arg(QDir::toNativeSeparators(directoryPath));
 
 	_ui->statusBar->showMessage(message);
 }
@@ -196,15 +210,17 @@ void MainWindow::onRemoveSelected()
 			return false;
 		}
 
-		if (!QFile::remove(item.path))
+		const QString path = QDir::toNativeSeparators(item.path);
+
+		if (!removeFile(path))
 		{
-			if (QFile::exists(item.path))
+			if (QFile::exists(path))
 			{
-				QMessageBox::warning(this, "Failed to remove file", "Failed to remove:\n\n" + item.path + "\n");
+				QMessageBox::warning(this, "Failed to remove file", "Failed to remove:\n\n" + path + "\n");
 				return false;
 			}
 
-			QMessageBox::warning(this, "Failed to remove file", item.path + "\n\ndoes not exist anymore!\n");
+			QMessageBox::warning(this, "Failed to remove file", path + "\n\ndoes not exist anymore!\n");
 		}
 
 		return true;

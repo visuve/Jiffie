@@ -1,4 +1,5 @@
 #include "FileListModel.hpp"
+#include <QDir>
 
 FileListModel::FileListModel(QObject* parent) :
 	QAbstractListModel(parent)
@@ -38,7 +39,7 @@ QVariant FileListModel::data(const QModelIndex& index, int role) const
 			case Qt::CheckStateRole:
 				return item.state;
 			case Qt::DisplayRole:
-				return item.path;
+				return QDir::toNativeSeparators(item.path);
 		}
 	}
 

@@ -47,9 +47,8 @@ void JunkFileFinder::run()
 	while (keepRunning() && iter.hasNext())
 	{
 		const QFileInfo fileInfo = iter.nextFileInfo();
-
-		const QString directoryPath = QDir::toNativeSeparators(fileInfo.path());
-		const QString filePath = QDir::toNativeSeparators(fileInfo.filePath());
+		const QString directoryPath = fileInfo.path();
+		const QString filePath = fileInfo.filePath();
 
 		emit junkFound(filePath);
 
