@@ -174,11 +174,9 @@ void MainWindow::onSelectAll()
 
 void MainWindow::onRemoveSelected()
 {
-	const QStringList filePaths = _model->selectedPaths();
-
-	if (filePaths.empty())
+	if (!_model->hasSelection())
 	{
-		QMessageBox::warning(this, "Failed to remove file", "Nothing selected!\n");
+		QMessageBox::warning(this, "Failed to remove file(s)", "Nothing selected!\n");
 		return;
 	}
 
@@ -191,21 +189,26 @@ void MainWindow::onRemoveSelected()
 		return;
 	}
 
-	for (const QString& filePath : filePaths)
+	_model->removeIf([this](const FileListModel::FileItem& item)->bool
 	{
-		if (!QFile::remove(filePath))
+		if (item.state != Qt::CheckState::Checked)
 		{
-			if (QFile::exists(filePath))
-			{
-				QMessageBox::warning(this, "Failed to remove file", "Failed to remove:\n\n" + filePath + "\n");
-				continue;
-			}
-
-			QMessageBox::warning(this, "Failed to remove file", filePath + "\n\ndoes not exist anymore!\n");
+			return false;
 		}
 
-		_model->removeFilePath(filePath);
-	}
+		if (!QFile::remove(item.path))
+		{
+			if (QFile::exists(item.path))
+			{
+				QMessageBox::warning(this, "Failed to remove file", "Failed to remove:\n\n" + item.path + "\n");
+				return false;
+			}
+
+			QMessageBox::warning(this, "Failed to remove file", item.path + "\n\ndoes not exist anymore!\n");
+		}
+
+		return true;
+	});
 }
 
 void MainWindow::onCreateFileContextMenu(const QPoint& pos)

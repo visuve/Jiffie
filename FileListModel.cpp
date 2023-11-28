@@ -5,7 +5,7 @@ FileListModel::FileListModel(QObject* parent) :
 {
 }
 
-int FileListModel::rowCount(const QModelIndex& parent) const
+int FileListModel::rowCount(const QModelIndex&) const
 {
 	return _files.size();
 }
@@ -62,13 +62,6 @@ void FileListModel::clear()
 	endResetModel();
 }
 
-void FileListModel::addFilePath(const QString& filePath)
-{
-	beginInsertRows(QModelIndex(), 0, 1);
-	_files.emplaceBack(Qt::CheckState::Unchecked, filePath);
-	endInsertRows();
-}
-
 void FileListModel::selectAll()
 {
 	beginResetModel();
@@ -81,29 +74,43 @@ void FileListModel::selectAll()
 	endResetModel();
 }
 
-QStringList FileListModel::selectedPaths() const
+bool FileListModel::hasSelection() const
 {
-	QStringList result;
-
 	for (const FileItem& item : _files)
 	{
 		if (item.state == Qt::CheckState::Checked)
 		{
-			result << item.path;
+			return true;
 		}
 	}
 
-	return result;
+	return false;
 }
 
-void FileListModel::removeFilePath(const QString& filePath)
+void FileListModel::removeIf(std::function<bool(const FileListModel::FileItem& item)> callback)
 {
 	beginResetModel();
 
-	_files.removeIf([=](const FileItem& item)
+	auto iter = _files.cbegin();
+
+	while (iter != _files.cend())
 	{
-		return item.path == filePath;
-	});
+		if (callback(*iter))
+		{
+			iter = _files.erase(iter);
+		}
+		else
+		{
+			++iter;
+		}
+	}
 
 	endResetModel();
+}
+
+void FileListModel::addFilePath(const QString& filePath)
+{
+	beginInsertRows(QModelIndex(), 0, 1);
+	_files.emplaceBack(Qt::CheckState::Unchecked, filePath);
+	endInsertRows();
 }
