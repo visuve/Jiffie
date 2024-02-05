@@ -33,15 +33,16 @@ MainWindow::MainWindow(QWidget* parent) :
 
 	_ui->statusBar->showMessage("Welcome to Jiffie!");
 
-	initJiffie();
-	initMenuBar();
-
 	_ui->listViewFiles->setModel(_model);
 
-	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::onStartSearch);
+	connect(_ui->pushButtonFindJunk, &QPushButton::clicked, this, &MainWindow::onStartStopSearch);
 	connect(_ui->pushButtonSelectAll, &QPushButton::clicked, this, &MainWindow::onSelectAll);
 	connect(_ui->pushButtonDeleteSelected, &QPushButton::clicked, this, &MainWindow::onRemoveSelected);
 	connect(_ui->listViewFiles, &QListView::customContextMenuRequested, this, &MainWindow::onCreateFileContextMenu);
+
+	initJiffie();
+	initMenuBar();
+	initStateMachine();
 }
 
 MainWindow::~MainWindow()
@@ -107,17 +108,30 @@ void MainWindow::onOpenDirectoryDialog()
 		_model->clear();
 		const QString directory = dialog.selectedFiles().first();
 		_ui->lineEditSelectedDirectory->setText(QDir::toNativeSeparators(directory));
+
+		emit directorySelected();
 	}
 }
 
-void MainWindow::onStartSearch()
+void MainWindow::onStartStopSearch()
 {
+	if (_jiffie->isRunning())
+	{
+		_jiffie->requestInterruption();
+		_jiffie->wait();
+
+		const QString message = QString("%1 Jiffie canceled!").arg(QTime::currentTime().toString());
+		_ui->statusBar->showMessage(message);
+
+		return;
+	}
+
 	const QString selectedDirectory = _ui->lineEditSelectedDirectory->text();
 
 	if (selectedDirectory.isEmpty())
 	{
 		onOpenDirectoryDialog();
-		onStartSearch();
+		onStartStopSearch();
 		return;
 	}
 
@@ -151,6 +165,8 @@ void MainWindow::onStartSearch()
 
 	const QString message = QString("%1 Jiffie started!").arg(QTime::currentTime().toString());
 	_ui->statusBar->showMessage(message);
+
+	emit searchStarted();
 }
 
 void MainWindow::onProgress(const QString& directoryPath)
@@ -171,6 +187,12 @@ void MainWindow::onFinished()
 			this,
 			"No junk files",
 			"No junk files were found.\n");
+
+		emit noResultsFound();
+	}
+	else
+	{
+		emit resultsFound();
 	}
 
 	const QString message =
@@ -287,4 +309,61 @@ void MainWindow::initMenuBar()
 	{
 		QMessageBox::aboutQt(this, "Jiffie");
 	});
+}
+
+void MainWindow::initStateMachine()
+{
+	auto initialState = new QState();
+	initialState->assignProperty(_ui->lineEditSelectedDirectory, "enabled", true);
+	initialState->assignProperty(_ui->lineEditWildcards, "enabled", false);
+	initialState->assignProperty(_ui->listViewFiles, "enabled", false);
+	initialState->assignProperty(_ui->pushButtonSelectAll, "enabled", false);
+	initialState->assignProperty(_ui->pushButtonDeleteSelected, "enabled", false);
+	initialState->assignProperty(_ui->pushButtonFindJunk, "enabled", false);
+	initialState->assignProperty(_ui->pushButtonFindJunk, "text", "Please select a directory");
+	initialState->setObjectName("empty");
+
+	auto readyState = new QState();
+	readyState->assignProperty(_ui->lineEditSelectedDirectory, "enabled", true);
+	readyState->assignProperty(_ui->lineEditWildcards, "enabled", true);
+	readyState->assignProperty(_ui->listViewFiles, "enabled", false);
+	readyState->assignProperty(_ui->pushButtonSelectAll, "enabled", false);
+	readyState->assignProperty(_ui->pushButtonDeleteSelected, "enabled", false);
+	readyState->assignProperty(_ui->pushButtonFindJunk, "enabled", true);
+	readyState->assignProperty(_ui->pushButtonFindJunk, "text", "Find Junk");
+	readyState->setObjectName("selected");
+
+	auto runningState = new QState();
+	runningState->assignProperty(_ui->lineEditSelectedDirectory, "enabled", false);
+	runningState->assignProperty(_ui->lineEditWildcards, "enabled", false);
+	runningState->assignProperty(_ui->listViewFiles, "enabled", false);
+	runningState->assignProperty(_ui->pushButtonSelectAll, "enabled", false);
+	runningState->assignProperty(_ui->pushButtonDeleteSelected, "enabled", false);
+	runningState->assignProperty(_ui->pushButtonFindJunk, "enabled", true);
+	runningState->assignProperty(_ui->pushButtonFindJunk, "text", "Cancel");
+	runningState->setObjectName("running");
+
+	auto finishedState = new QState();
+	finishedState->assignProperty(_ui->lineEditSelectedDirectory, "enabled", true);
+	finishedState->assignProperty(_ui->lineEditWildcards, "enabled", true);
+	finishedState->assignProperty(_ui->listViewFiles, "enabled", true);
+	finishedState->assignProperty(_ui->pushButtonSelectAll, "enabled", true);
+	finishedState->assignProperty(_ui->pushButtonDeleteSelected, "enabled", true);
+	finishedState->assignProperty(_ui->pushButtonFindJunk, "enabled", true);
+	finishedState->assignProperty(_ui->pushButtonFindJunk, "text", "Find Junk");
+	finishedState->setObjectName("finished");
+
+	initialState->addTransition(this, &MainWindow::directorySelected, readyState);
+	readyState->addTransition(this, &MainWindow::searchStarted, runningState);
+	runningState->addTransition(this, &MainWindow::resultsFound, finishedState);
+	runningState->addTransition(this, &MainWindow::noResultsFound, readyState);
+
+	// TODO: add a state where all results are cleared
+
+	_machine.addState(initialState);
+	_machine.addState(readyState);
+	_machine.addState(runningState);
+	_machine.addState(finishedState);
+	_machine.setInitialState(initialState);
+	_machine.start();
 }

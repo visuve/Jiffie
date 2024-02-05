@@ -40,6 +40,7 @@ bool JunkFileFinder::keepRunning() const
 
 void JunkFileFinder::run()
 {
+	// NOTE: constructing this on large and/or slow drives takes a lot of time. Consider alternative options
 	QDirIterator iter(_directory, _wildcards, QDir::Files, QDirIterator::Subdirectories);
 
 	QString currentDirectory;
@@ -58,4 +59,6 @@ void JunkFileFinder::run()
 			currentDirectory = directoryPath;
 		}
 	}
+
+	qDebug() << "Finished";
 }
