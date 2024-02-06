@@ -77,15 +77,12 @@ void FileListModel::selectAll()
 
 bool FileListModel::hasSelection() const
 {
-	for (const FileItem& item : _files)
+	const auto isChecked = [](const FileItem& item)->bool
 	{
-		if (item.state == Qt::CheckState::Checked)
-		{
-			return true;
-		}
-	}
+		return item.state == Qt::CheckState::Checked;
+	};
 
-	return false;
+	return std::any_of(_files.begin(), _files.cend(), isChecked);
 }
 
 void FileListModel::removeIf(std::function<bool(const FileListModel::FileItem& item)> callback)
