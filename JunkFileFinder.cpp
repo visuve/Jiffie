@@ -1,7 +1,7 @@
 #include "JunkFileFinder.hpp"
 
 #include <QDebug>
-#include <QDirIterator>
+#include <QDirListing>
 
 JunkFileFinder::JunkFileFinder(QObject* parent) :
 	QThread(parent)
@@ -40,16 +40,24 @@ bool JunkFileFinder::keepRunning() const
 
 void JunkFileFinder::run()
 {
-	// NOTE: constructing this on large and/or slow drives takes a lot of time. Consider alternative options
-	QDirIterator iter(_directory, _wildcards, QDir::Files, QDirIterator::Subdirectories);
-
 	QString currentDirectory;
 
-	while (keepRunning() && iter.hasNext())
+	// The QDirListing is still very slow with wildcards
+	QDirListing listing(_directory, _wildcards,
+		QDirListing::IteratorFlag::FilesOnly |
+		QDirListing::IteratorFlag::Recursive |
+		QDirListing::IteratorFlag::IncludeHidden);
+
+	for (const auto& entry: listing)
 	{
-		const QFileInfo fileInfo = iter.nextFileInfo();
-		const QString directoryPath = fileInfo.path();
-		const QString filePath = fileInfo.filePath();
+		if (!keepRunning())
+		{
+			qDebug() << "Aborted";
+			return;
+		}
+
+		const QString directoryPath = entry.absolutePath();
+		const QString filePath = entry.absoluteFilePath();
 
 		emit junkFound(filePath);
 
